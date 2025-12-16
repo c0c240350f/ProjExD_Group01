@@ -165,17 +165,17 @@ class Explosion(pg.sprite.Sprite):
             self.kill()
 
 
-class Enemy(pg.sprite.Sprite):
+#class Enemy(pg.sprite.Sprite):
     
     
-    def __init__(self):
-        super().__init__()
-        self.image =
-        self.rect = 
-        self.rect.center = 
-        self.vx, self.vy = 
+    #def __init__(self):
+        #super().__init__()
+        #self.image =
+        #self.rect = 
+        #self.rect.center = 
+        #self.vx, self.vy = 
         
-    def update(self):
+    #def update(self):
         
 
 
@@ -189,7 +189,7 @@ class Score:
     def __init__(self):
         self.font = pg.font.Font(None, 50)
         self.color = (0, 0, 255)
-        self.value = 10000
+        self.value = 0
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         self.rect = self.image.get_rect()
         self.rect.center = 100, HEIGHT-50
@@ -249,18 +249,18 @@ def main():
         gravitys.update()
         gravitys.draw(screen)
 
-        if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
-            emys.add(Enemy())
+        #if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
+            #emys.add(Enemy())
 
-        for emy in emys:
-            if emy.state == "stop" and tmr%emy.interval == 0:
+        #for emy in emys:
+            #if emy.state == "stop" and tmr%emy.interval == 0:
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
-                bombs.add(Bomb(emy, bird))
+                #bombs.add(Bomb(emy, bird))
 
-        for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():  # ビームと衝突した敵機リスト
-            exps.add(Explosion(emy, 100))  # 爆発エフェクト
-            score.value += 10  # 10点アップ
-            bird.change_img(6, screen)  # こうかとん喜びエフェクト
+        #for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():  # ビームと衝突した敵機リスト
+            #exps.add(Explosion(emy, 100))  # 爆発エフェクト
+            #score.value += 10  # 10点アップ
+            #bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
 
         for bomb in pg.sprite.spritecollide(bird, bombs, True):  # こうかとんと衝突した爆弾リスト
