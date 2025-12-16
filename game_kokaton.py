@@ -37,6 +37,34 @@ def calc_orientation(org: pg.Rect, dst: pg.Rect) -> tuple[float, float]:
     return x_diff/norm, y_diff/norm
 
 
+def gameover(screen: pg.Surface, res_rank: str) -> None:
+    """
+    引数：screen
+    戻り値：なし
+    ゲームオーバー画面を表示する
+    """
+    gameover_img = pg.Surface((1100,650))
+    pg.draw.rect(gameover_img, (0,0,0), (0,0,WIDTH,HEIGHT))
+    gameover_img.set_alpha(200)
+    fonto = pg.font.Font(None,80)
+    txt = fonto.render("Game Over", True, (255,255,255))
+    gameover_img.blit(txt, [400,300])
+    rank_font = pg.font.Font(None, 60)
+    rank_txt = rank_font.render(f"Rank: {res_rank}", True, (255,255,255))
+    gameover_img.blit(rank_txt, [470,400])
+    kk_img = pg.transform.rotozoom(pg.image.load("fig/8.png"), 0, 0.9)
+    kk_rct = kk_img.get_rect()
+    kk_rct.center = 350,325
+    gameover_img.blit(kk_img,kk_rct)
+    kk2_img = pg.transform.rotozoom(pg.image.load("fig/8.png"), 0, 0.9)
+    kk2_rct = kk2_img.get_rect()
+    kk2_rct.center = 750,325
+    gameover_img.blit(kk2_img,kk2_rct)
+    screen.blit(gameover_img, [0,0])
+    pg.display.update()
+    time.sleep(5)
+
+
 class Bird(pg.sprite.Sprite):
     """
     ゲームキャラクター（こうかとん）に関するクラス
@@ -221,10 +249,73 @@ class Gravity(pg.sprite.Sprite):
         if self.life < 0:
             self.kill()
 
+
+class Time():
+    """
+    タイムをカウントするクラス
+    """
+    def __init__(self):
+        self.font = pg.font.Font(None, 50)
+        self.color = (150, 150, 255)
+        self.rect = self.font.render("Time: 00:00", 0, self.color).get_rect()
+        self.rect.center = 105, 40
+    
+    def update(self, screen: pg.Surface, tmr: int):
+        total = tmr // 60
+        min = total // 60
+        sec = total % 60
+        time_str = f"Time:{min:02}:{sec:02}"
+        self.image = self.font.render(time_str, 0, self.color)
+        screen.blit(self.image, self.rect)
+
+
+class Rank():
+    """
+    ランクの表示をするクラス
+    """
+    def __init__(self):
+        self.font = pg.font.Font(None, 50)
+        self.color = (150,150,255)
+        self.rect = self.font.render("Rank:X", 0, self.color).get_rect()
+        self.rect.center = 70, 80
+
+    def get_rank(self, tmr: int) -> str:
+        total_sec = tmr // 60
+        if total_sec < 15:
+            return "D"
+        elif total_sec < 45:
+            return "C"
+        elif total_sec < 75:
+            return "B"
+        elif total_sec < 105:
+            return "A"
+        else:
+            return "S"
+
+    def update(self, screen: pg.Surface, tmr: int):
+        if (tmr // 60) < 15:
+            rank = "D"
+        elif (tmr // 60) < 45:
+            rank = "C"
+        elif (tmr // 60) < 75:
+            rank = "B"
+        elif (tmr // 60) < 105:
+            rank = "A"
+        else:
+            rank = "S"
+
+        self.image = self.font.render(f"Rank:{rank}", 0, self.color)
+        screen.blit(self.image, self.rect)
+
+        
+        
+
+
 def main():
     pg.display.set_caption("真！こうかとん無双")
-    screen = pg.display.set_mode((WIDTH, HEIGHT))
+    screen = pg.display.set_mode((WIDTH,HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
+    bg_img2 = pg.transform.flip(bg_img,True,False)  # 横スクロール用の反転画像
     score = Score()
 
     bird = Bird(3, (900, 400))
@@ -232,7 +323,8 @@ def main():
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
     gravitys = pg.sprite.Group()
-
+    time = Time()
+    rank = Rank()
     tmr = 0
     clock = pg.time.Clock()
     while True:
@@ -243,11 +335,15 @@ def main():
             
             if event.type == pg.KEYDOWN and event.key == pg.K_LSHIFT:
                 bird.speed = 20
+                gameover(screen,rank.get_rank(tmr))
+                return
             else:
                 bird.speed = 10
 
-                
-        screen.blit(bg_img, [0, 0])
+        x = tmr % 3200  # xを0から3199の範囲で変化させる
+        screen.blit(bg_img, [-x, 0])  # 最初の背景画像（画面左端からスクロール量 -x の位置）
+        screen.blit(bg_img2, [-x + 1600 ,0])  # 2枚目の背景画像（1枚目の右端から開始）
+        screen.blit(bg_img, [-x + 3200, 0])  # 3枚目の背景画像（2枚目の右端から開始）
         gravitys.update()
         gravitys.draw(screen)
 
@@ -270,6 +366,8 @@ def main():
                 if bomb.state=="active":
                     bird.change_img(8, screen)  # こうかとん悲しみエフェクト
                     score.update(screen)
+                    # result = tmr // 60
+                    # print(result)
                     pg.display.update()
                     time.sleep(2)
                     return
@@ -295,10 +393,12 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
-        
+        time.update(screen, tmr)
+        rank.update(screen,tmr)
+
         pg.display.update()
         tmr += 1
-        clock.tick(50)
+        clock.tick(60)
         
 
 
