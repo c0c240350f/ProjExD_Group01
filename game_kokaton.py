@@ -165,17 +165,34 @@ class Explosion(pg.sprite.Sprite):
             self.kill()
 
 
-#class Enemy(pg.sprite.Sprite):
+class Enemy(pg.sprite.Sprite):
+    """
+    敵に関するクラス
+    """
     
+    imgs = [pg.image.load(f"fig/bakemon{i}.png") for i in range(1, 4)] #画像読み込み
     
-    #def __init__(self):
-        #super().__init__()
-        #self.image =
-        #self.rect = 
-        #self.rect.center = 
-        #self.vx, self.vy = 
-        
-    #def update(self):
+    def __init__(self):
+        """
+        画像がランダムな位置で横スクロールする
+        """
+        super().__init__()
+
+    
+        original_image = random.choice(Enemy.imgs)
+        self.image = pg.transform.rotozoom(original_image, 0, 0.08)
+        self.rect = self.image.get_rect()
+        self.rect.x = WIDTH + random.randint(0,50)
+        self.rect.y = HEIGHT - random.randint(100, 500)
+
+
+        self.speed = random.randint(2,6)
+
+    def update(self):
+        self.rect.x -= self.speed
+        if self.rect.right < 0:
+            self.rect.x = WIDTH + random.randint(0,50)
+            self.rect.y = HEIGHT - random.randint(100, 500)
         
 
 
@@ -230,9 +247,10 @@ def main():
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
     gravitys = pg.sprite.Group()
-
     tmr = 0
     clock = pg.time.Clock()
+
+    
     while True:
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():
@@ -244,13 +262,12 @@ def main():
             else:
                 bird.speed = 10
 
-                
         screen.blit(bg_img, [0, 0])
         gravitys.update()
         gravitys.draw(screen)
 
-        #if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
-            #emys.add(Enemy())
+        if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
+            emys.add(Enemy())
 
         #for emy in emys:
             #if emy.state == "stop" and tmr%emy.interval == 0:
