@@ -123,13 +123,8 @@ class Bomb(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = WIDTH - 25, random.randint(0,HEIGHT)
         self.vx, self.vy = -3, 0
-
-        
-        # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
-        # self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
-        # self.rect.centerx = emy.rect.centerx
-        # self.rect.centery = emy.rect.centery+emy.rect.height//2
         self.speed = random.randint(2,4)
+        self.interval = random.randint(50,300)
         
 
     def update(self):
@@ -164,10 +159,10 @@ class Minbomb(pg.sprite.Sprite):
         self.vx, self.vy = +1, 0
 
         
-        # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
-        # self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
-        # self.rect.centerx = emy.rect.centerx
-        # self.rect.centery = emy.rect.centery+emy.rect.height//2
+        #爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
+        self.vx, self.vy = calc_orientation(bomb.rect, bird.rect)  
+        self.rect.centerx = bomb.rect.centerx
+        self.rect.centery = bomb.rect.centery+bomb.rect.height//2
         self.speed = random.randint(2,3)
         
 
@@ -298,10 +293,11 @@ def main():
             bombs.add(Bomb(bird))
         elif tmr >= 500 and tmr%25 == 0:  # 一定時間経過後に25フレームに1回，爆弾を出現させる
             bombs.add(Bomb(bird))
-        #for emy in emys:
-            #if emy.state == "stop" and tmr%emy.interval == 0:
-                # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
-                #bombs.add(Bomb(emy, bird))
+
+        for bomb in bombs:
+            if  tmr%bomb.interval == 0:
+                #intervalに応じて爆弾投下
+                minbombs.add(Minbomb(bomb, bird))
 
         #for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():  # ビームと衝突した敵機リスト
             #exps.add(Explosion(emy, 100))  # 爆発エフェクト
@@ -318,7 +314,24 @@ def main():
                     time.sleep(2)
                     return
                 #exps.add(Explosion(bomb, 50))  # 爆発エフェクト
-    
+
+        for minbomb in pg.sprite.spritecollide(bird, minbombs, True):  # こうかとんと衝突した爆弾リスト
+            # if bird.state != "hyper":  # 無敵状態でないならゲームオーバー
+            #     if bomb.state=="active":
+                    bird.change_img(8, screen)  # こうかとん悲しみエフェクト
+                    score.update(screen)
+                    pg.display.update()
+                    time.sleep(2)
+                    return
+                #exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+
+        # for bomb in pg.sprite.spritecollide(, bomb, True):#照準の接触判定
+        #     exps.add(Explosion(bomb,50))  # 爆発エフェクト
+        #     bomb.kill()
+        # for minbomb in pg.sprite.spritecollide(, minbombs, True):#照準の接触判定
+        #     exps.add(Explosion(minbomb, 50))  # 爆発エフェクト
+        #     minbomb.kill()
+
         if len(gravitys)>0:
             for emy in emys:
                 exps.add(Explosion(emy,50))  # 爆発エフェクト
