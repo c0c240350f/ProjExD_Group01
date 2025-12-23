@@ -250,12 +250,12 @@ class Item(pg.sprite.Sprite):
         self.rect.center =  WIDTH, random.randint(0, HEIGHT)  # 画面右側のランダムな高さから出現
         self.vx, self.vy = random.randint(-10,-5),0  # ランダムな速度で左に流れる
         self.count = 0  
-        self.hp = hp
+        # self.hp = hp
 
     def get_item(self):
         """
         アイテムを獲得したときのメソッド
-        アイテムの画像をself.numから判定し、画像ごとに効果を発動
+        アイテムを削除する
         """
         self.kill()
         return
@@ -288,7 +288,7 @@ class HP:
     def __init__(self, bird: Bird):
         self.font = pg.font.Font(None, 50)
         self.color = (0, 0, 255)
-        self.value = bird.hp
+        self.value = bird.hp  # こうかとんのHP
         self.image = self.font.render(f"HP: {self.value}", 0, self.color)
         self.rect = self.image.get_rect()
         self.rect.center = WIDTH/2, 30
@@ -348,23 +348,22 @@ def main():
 
 
         for bomb in pg.sprite.spritecollide(bird, bombs, True):  # こうかとんと衝突した爆弾リスト
-            # if bird.state != "hyper":  # 無敵状態でないならゲームオーバー
             if bomb.state=="active":
-                if hp.value == 0:
+                if hp.value <= 1:  # HPが1以下ならゲームオーバー
                     bird.change_img(8, screen)  # こうかとん悲しみエフェクト
                     score.update(screen)
                     pg.display.update()
                     time.sleep(2)
                     return
-                else:
+                else:  # HPが1より大きければHPが1減る
                     hp.value -= 1
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
 
         for item in pg.sprite.spritecollide(bird, items, True): # アイテムとの衝突判定
-            if item.num == 0:
-                hp.value += 1
-            elif item.num == 1:
+            if item.num == 0:  # 0番のアイテム(キャンディ)を取るとHPが1回復
+                hp.value += 1 
+            elif item.num == 1:  # 1番のアイテム(ストロベリー)を取ると画面上の敵を倒す
                 gravitys.add(Gravity(50))
                 for emy in emys:
                     exps.add(Explosion(emy,50))  # 爆発エフェクト
