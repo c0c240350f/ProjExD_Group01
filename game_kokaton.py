@@ -186,8 +186,13 @@ class Enemy(pg.sprite.Sprite):
         self.rect.y = HEIGHT - random.randint(100, 500) #y座標の位置をランダムにして調整　
 
 
-        self.speed = random.randint(2,6) #スピードを5段階に
-
+        self.base_speed = random.randint(1,6) #スピードを5段階に
+        self.speed = self.base_speed
+    
+    def slow_speed(self):
+        self.speed = self.base_speed *0.5
+    
+    
     def update(self):
         self.rect.x -= self.speed
         if self.rect.right < 0: #右の座標が0より小さかったら
@@ -265,9 +270,14 @@ def main():
         screen.blit(bg_img, [0, 0])
         gravitys.update()
         gravitys.draw(screen)
-
-        if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
-            emys.add(Enemy())
+        if tmr < 250:
+            spawn_interval = 300  # 
+        elif tmr < 750:
+            spawn_interval = 200  # 
+        else:
+            spawn_interval = 100  #
+        if tmr % spawn_interval == 0:
+            emys.add(Enemy()) 
 
         #for emy in emys:
             #if emy.state == "stop" and tmr%emy.interval == 0:
