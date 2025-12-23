@@ -335,7 +335,6 @@ def main():
             
             if event.type == pg.KEYDOWN and event.key == pg.K_LSHIFT:
                 bird.speed = 20
-                gameover(screen,rank.get_rank(tmr))
                 return
             else:
                 bird.speed = 10
