@@ -311,6 +311,49 @@ class Score:
         screen.blit(self.image, self.rect)
 
 
+class Aim(pg.sprite.Sprite):
+    """
+    照準機能に関するクラス
+    """
+    def __init__(self,mouse_pos:tuple[int,int],b_num:int) -> None:
+        """
+        カーソルの位置を取得する 
+        引数１ mouse_pos: カーソルの位置
+        引数２ b_num: 残弾数
+        """
+        self.target_img=pg.image.load("fig/target.png")
+        self.target_img=pg.transform.scale(self.target_img,(60,60))
+        self.x=mouse_pos[0]
+        self.y=mouse_pos[1]
+        self.b=b_num
+        self.font = pg.font.Font(None, 50)
+        self.color = (0, 0, 255)
+        self.image = self.font.render(f"bullets: {self.b}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 100, HEIGHT-100
+
+    def update(self,screen:pg.Surface) -> None:
+        """
+        カーソルの位置に赤い円を描画する＋残弾数を表示する
+        引数１ screen: 画面surface
+        """
+        screen.blit(self.target_img,[self.x-28,self.y-26])
+        screen.blit(self.image,self.rect)
+    
+
+class Point:
+    """
+    爆発用の座標のクラス
+    """
+    def __init__(self, pos:tuple[int,int]) -> None:
+        """
+        クリックした座標
+        引数１ pos: エフェクトを描画する座標
+        """
+        self.rect = pg.Rect(0, 0, 0, 0)
+        self.rect.center = pos
+
+
 class Gravity(pg.sprite.Sprite):
     """
     重力場に関するクラス
@@ -473,13 +516,25 @@ def main():
     items = pg.sprite.Group()
     hp = HP(bird)
 
+    mouse_pos=pg.mouse.get_pos()
+    
     tmr = 0
     slow_timer = 0
     clock = pg.time.Clock()
 
     
+    last_explosion_time = -100
+    EXP_COOLTIME = 15
+    rl=10
+    last_reload_time = 0
+    RELOAD_INTERVAL = 200
+    aim=Aim(pg.mouse.get_pos(),rl)
+
     while True:
         key_lst = pg.key.get_pressed()
+        mouse_pos=pg.mouse.get_pos()
+        
+        aim=Aim(mouse_pos,rl)
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
@@ -489,6 +544,18 @@ def main():
                 return
             else:
                 bird.speed = 10
+            
+            if event.type==pg.MOUSEBUTTONDOWN: #マウスがクリックされたら
+                if tmr-last_explosion_time >= EXP_COOLTIME: #クールタイム確認
+                    if rl >= 1:
+                        p = Point(pg.mouse.get_pos())
+                        exps.add(Explosion(p, 60))
+                        last_explosion_time = tmr
+                        rl -= 1
+
+        if tmr - last_reload_time >= RELOAD_INTERVAL and rl < 10:
+            rl += 1
+            last_reload_time = tmr 
 
         x = tmr % 3200  # xを0から3199の範囲で変化させる
         screen.blit(bg_img, [-x, 0])  # 最初の背景画像（画面左端からスクロール量 -x の位置）
@@ -509,6 +576,7 @@ def main():
             if  tmr%emy.interval == 0:
                     #intervalに応じて爆弾投下
                     minbombs.add(Minbomb(emy, bird))
+        
 
         if tmr >= 250 and tmr%50 == 0:  # 一定時間経過後に50フレームに1回，爆弾を出現させる
             bombs.add(Bomb())
@@ -667,6 +735,7 @@ def main():
         hp.update(screen)
         items.update()
         items.draw(screen)
+        aim.update(screen)
         
         pg.display.update()
         tmr += 1
