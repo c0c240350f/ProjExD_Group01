@@ -172,6 +172,8 @@ class Minbomb(pg.sprite.Sprite):
         #爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
         self.vx, self.vy = calc_orientation(bomb.rect, bird.rect)
         self.vx -= 0.9  
+        if self.vx == 0:
+            self.vx += 0.1
         self.rect.centerx = bomb.rect.centerx
         self.rect.centery = bomb.rect.centery+bomb.rect.height//2
         self.speed = random.randint(2,3)
@@ -216,7 +218,12 @@ class Explosion(pg.sprite.Sprite):
 
 
 #class Enemy(pg.sprite.Sprite):
+class Enemy(pg.sprite.Sprite):
+    """
+    敵に関するクラス
+    """
     
+    imgs = [pg.image.load(f"fig/alien{i}.png") for i in range(1, 4)] #画像読み込み
     
     #def __init__(self):
         #super().__init__()
@@ -226,6 +233,32 @@ class Explosion(pg.sprite.Sprite):
         #self.vx, self.vy = 
         
     #def update(self):
+    def __init__(self):
+        """
+        画像がランダムな位置で横スクロールする
+        """
+        super().__init__()
+
+    
+        original_image = random.choice(Enemy.imgs) #ランダムな画像の読みこみ
+        self.image = pg.transform.rotozoom(original_image, 0, 0.8) #画像の大きさを設定
+        self.rect = self.image.get_rect()
+        self.rect.x = WIDTH + random.randint(0,50) #x座標の位置をランダムにして調整
+        self.rect.y = HEIGHT - random.randint(100, 500) #y座標の位置をランダムにして調整　
+
+
+        self.base_speed = random.randint(1,6) #スピードを5段階に
+        self.speed = self.base_speed
+        self.interval = random.randint(50,300)
+    def slow_speed(self):
+        self.speed = self.base_speed *0.5
+    
+    
+    def update(self):
+        self.rect.x -= self.speed
+        if self.rect.right < 0: #右の座標が0より小さかったら
+            self.rect.x = WIDTH + random.randint(0,50)
+            self.rect.y = HEIGHT - random.randint(100, 500)
         
 
 
@@ -281,9 +314,10 @@ def main():
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
     gravitys = pg.sprite.Group()
-
     tmr = 0
     clock = pg.time.Clock()
+
+    
     while True:
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():
@@ -295,10 +329,21 @@ def main():
             else:
                 bird.speed = 10
 
-                
         screen.blit(bg_img, [0, 0])
         gravitys.update()
         gravitys.draw(screen)
+        if tmr < 250:
+            spawn_interval = 300  # 300フレームごとに敵出現
+        elif tmr < 750:
+            spawn_interval = 200  # 200フレームごとに敵出現
+        else:
+            spawn_interval = 150  # 150フレームごとに敵出現
+        if tmr % spawn_interval == 0:
+            emys.add(Enemy())
+        for emy in emys:
+            if  tmr%emy.interval == 0:
+                    #intervalに応じて爆弾投下
+                    minbombs.add(Minbomb(emy, bird))
 
         if tmr >= 250 and tmr%50 == 0:  # 一定時間経過後に50フレームに1回，爆弾を出現させる
             bombs.add(Bomb())
