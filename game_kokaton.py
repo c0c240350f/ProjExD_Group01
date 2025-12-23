@@ -170,7 +170,7 @@ class Enemy(pg.sprite.Sprite):
     敵に関するクラス
     """
     
-    imgs = [pg.image.load(f"fig/bakemon{i}.png") for i in range(1, 4)] #画像読み込み
+    imgs = [pg.image.load(f"fig/alien{i}.png") for i in range(1, 4)] #画像読み込み
     
     def __init__(self):
         """
@@ -179,18 +179,18 @@ class Enemy(pg.sprite.Sprite):
         super().__init__()
 
     
-        original_image = random.choice(Enemy.imgs)
-        self.image = pg.transform.rotozoom(original_image, 0, 0.08)
+        original_image = random.choice(Enemy.imgs) #ランダムな画像の読みこみ
+        self.image = pg.transform.rotozoom(original_image, 0, 0.8) #画像の大きさを設定
         self.rect = self.image.get_rect()
-        self.rect.x = WIDTH + random.randint(0,50)
-        self.rect.y = HEIGHT - random.randint(100, 500)
+        self.rect.x = WIDTH + random.randint(0,50) #x座標の位置をランダムにして調整
+        self.rect.y = HEIGHT - random.randint(100, 500) #y座標の位置をランダムにして調整　
 
 
-        self.speed = random.randint(2,6)
+        self.speed = random.randint(2,6) #スピードを5段階に
 
     def update(self):
         self.rect.x -= self.speed
-        if self.rect.right < 0:
+        if self.rect.right < 0: #右の座標が0より小さかったら
             self.rect.x = WIDTH + random.randint(0,50)
             self.rect.y = HEIGHT - random.randint(100, 500)
         
