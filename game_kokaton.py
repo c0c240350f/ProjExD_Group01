@@ -199,28 +199,34 @@ class Score:
         screen.blit(self.image, self.rect)
 
 
-class Aim():
+class Aim(pg.sprite.Sprite):
     """
     照準機能に関するクラス
     """
-    def __init__(self,mouse_pos:tuple[int,int]) -> None:
+    def __init__(self,mouse_pos:tuple[int,int],b_num:int) -> None:
         """
         カーソルの位置を取得する 
         引数１ mouse_pos: カーソルの位置
+        引数２ b_num: 残弾数
         """
-        self.surface=pg.Surface((20,20))
-        pg.draw.circle(self.surface,(255,0,0),(10,10),10)
-        self.surface.set_colorkey((0,0,0))
-        self.surface.set_alpha(100)
+        self.target_img=pg.image.load("fig/target.png")
+        self.target_img=pg.transform.scale(self.target_img,(60,60))
         self.x=mouse_pos[0]
         self.y=mouse_pos[1]
+        self.b=b_num
+        self.font = pg.font.Font(None, 50)
+        self.color = (0, 0, 255)
+        self.image = self.font.render(f"bullets: {self.b}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 100, HEIGHT-100
 
     def update(self,screen:pg.Surface) -> None:
         """
-        カーソルの位置に赤い円を描画する
+        カーソルの位置に赤い円を描画する＋残弾数を表示する
         引数１ screen: 画面surface
         """
-        screen.blit(self.surface,[self.x,self.y])
+        screen.blit(self.target_img,[self.x-28,self.y-26])
+        screen.blit(self.image,self.rect)
     
 
 class Point:
@@ -267,15 +273,22 @@ def main():
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
     gravitys = pg.sprite.Group()
-
+    mouse_pos=pg.mouse.get_pos()
+    
     tmr = 0
     clock = pg.time.Clock()
     last_explosion_time = -100
     EXP_COOLTIME = 15
+    rl=10
+    last_reload_time = 0
+    RELOAD_INTERVAL = 200
+    aim=Aim(pg.mouse.get_pos(),rl)
 
     while True:
         key_lst = pg.key.get_pressed()
         mouse_pos=pg.mouse.get_pos()
+        
+        aim=Aim(mouse_pos,rl)
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return 0
@@ -287,15 +300,21 @@ def main():
             
             if event.type==pg.MOUSEBUTTONDOWN: #マウスがクリックされたら
                 if tmr-last_explosion_time >= EXP_COOLTIME: #クールタイム確認
-                    p = Point(pg.mouse.get_pos())
-                    exps.add(Explosion(p, 60))
-                    last_explosion_time = tmr
+                    if rl >= 1:
+                        p = Point(pg.mouse.get_pos())
+                        exps.add(Explosion(p, 60))
+                        last_explosion_time = tmr
+                        rl -= 1
+
+        if tmr - last_reload_time >= RELOAD_INTERVAL and rl < 10:
+            rl += 1
+            last_reload_time = tmr 
 
                 
         screen.blit(bg_img, [0, 0])
         gravitys.update()
         gravitys.draw(screen)
-        aim=Aim(mouse_pos)
+        
 
         #if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             #emys.add(Enemy())
