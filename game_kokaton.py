@@ -177,12 +177,17 @@ class Enemy(pg.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pg.transform.rotozoom(random.choice(__class__.imgs), 0, 0.8)
+        self.speed = -2
         self.rect = self.image.get_rect()
-        self.rect.center = random.randint(0, WIDTH), 0
-        self.vx, self.vy = 0, +6
-        self.bound = random.randint(50, HEIGHT//2)  # 停止位置
+        self.rect.center = WIDTH,random.randint(0, HEIGHT)
+        self.vx, self.vy = self.speed, 0
+        # self.bound = random.randint(50, HEIGHT//2)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         self.interval = random.randint(50, 300)  # 爆弾投下インターバル
+        self.dspeed = 1
+
+    def slow_speed(self):
+        self.dspeed = 0.5
 
     def update(self):
         """
@@ -190,11 +195,10 @@ class Enemy(pg.sprite.Sprite):
         ランダムに決めた停止位置_boundまで降下したら，_stateを停止状態に変更する
         引数 screen：画面Surface
         """
-        if self.rect.centery > self.bound:
-            self.vy = 0
-            self.state = "stop"
-        self.rect.move_ip(self.vx, self.vy)
-        
+        # if self.rect.centery > self.bound:
+        #     self.vy = 0
+        #     self.state = "stop"
+        self.rect.move_ip(self.vx*self.dspeed, self.vy)
 
 
 
@@ -313,6 +317,7 @@ def main():
     hp = HP(bird)
 
     tmr = 0
+    slow_timer = 0
     clock = pg.time.Clock()
     while True:
         key_lst = pg.key.get_pressed()
@@ -338,8 +343,15 @@ def main():
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
                 bombs.add(Bomb(emy, bird))
 
-        if tmr%100 == 0:  # 200フレームに1回，敵機を出現させる
+        if tmr%100 == 0:  # 100フレームに1回，アイテムを出現させる
             items.add(Item(hp))
+
+        if slow_timer != 0:
+            slow_timer -= 1
+            if len(emys) != 0:
+                for emy in emys:
+                    emy.slow_speed()
+
 
         #for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():  # ビームと衝突した敵機リスト
             #exps.add(Explosion(emy, 100))  # 爆発エフェクト
@@ -356,24 +368,31 @@ def main():
                     time.sleep(2)
                     return
                 else:  # HPが1より大きければHPが1減る
-                    hp.value -= 1
+                    if hp.value < 10:
+                        hp.value -= 1
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
 
         for item in pg.sprite.spritecollide(bird, items, True): # アイテムとの衝突判定
+        # for item in pg.sprite.spritecollide(t, items, True): # アイテムとの衝突判定
             if item.num == 0:  # 0番のアイテム(キャンディ)を取るとHPが1回復
                 hp.value += 1 
             elif item.num == 1:  # 1番のアイテム(ストロベリー)を取ると画面上の敵を倒す
                 gravitys.add(Gravity(50))
-                for emy in emys:
-                    exps.add(Explosion(emy,50))  # 爆発エフェクト
-                    emy.kill()
-                for bomb in bombs:
-                    exps.add(Explosion(bomb, 50))  # 爆発エフェクト
-                    bomb.kill()
-            elif item.num == 2:
-                pass
-            else:
+                if len(emys) != 0:
+                    for emy in emys:
+                        exps.add(Explosion(emy,50))  # 爆発エフェクト
+                        emy.kill()
+                if len(bombs) != 0:
+                    for bomb in bombs:
+                        exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+                        bomb.kill()
+            elif item.num == 2:  # 画面上の敵の減速
+                slow_timer = 200
+                # if len(emys) != 0:
+                #     for emy in emys:
+                #         emy.slow_speed()
+            else:  # 必要に応じて追加
                 pass
             item.get_item()
 
